@@ -23,7 +23,9 @@ abstract class ClipboardHistoryPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<String?> getPlatformVersion() {
-    throw UnimplementedError('platformVersion() has not been implemented.');
-  }
+  Future<String?> captureClipboard();
+
+  Future<List<String>> getHistory();
+
+  Future<bool> clearHistory();
 }

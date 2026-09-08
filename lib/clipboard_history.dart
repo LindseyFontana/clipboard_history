@@ -1,8 +1,17 @@
-
 import 'clipboard_history_platform_interface.dart';
 
 class ClipboardHistory {
-  Future<String?> getPlatformVersion() {
-    return ClipboardHistoryPlatform.instance.getPlatformVersion();
+  final List<String> history = [];
+  final int historyLimit = 50;
+
+  Future<String?> captureClipboard() {
+    return ClipboardHistoryPlatform.instance.captureClipboard();
   }
+
+  Future<List<String>> getHistory() async {
+    return ClipboardHistoryPlatform.instance.getHistory();
+  }
+
+  Future<bool> clearHistory() async =>
+      await ClipboardHistoryPlatform.instance.clearHistory();
 }

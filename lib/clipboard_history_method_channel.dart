@@ -3,17 +3,22 @@ import 'package:flutter/services.dart';
 
 import 'clipboard_history_platform_interface.dart';
 
-/// An implementation of [ClipboardHistoryPlatform] that uses method channels.
 class MethodChannelClipboardHistory extends ClipboardHistoryPlatform {
-  /// The method channel used to interact with the native platform.
   @visibleForTesting
   final methodChannel = const MethodChannel('clipboard_history');
 
   @override
-  Future<String?> getPlatformVersion() async {
-    final version = await methodChannel.invokeMethod<String>(
-      'getPlatformVersion',
-    );
-    return version;
+  Future<String?> captureClipboard() async {
+    final data = await methodChannel.invokeMethod<String>('captureClipboard');
+    return data;
   }
+
+  @override
+  Future<List<String>> getHistory() async {
+    return await methodChannel.invokeMethod<List<String>?>('getHistory') ?? [];
+  }
+
+  @override
+  Future<bool> clearHistory() async =>
+      await methodChannel.invokeMethod<bool>('clearHistory') ?? false;
 }
