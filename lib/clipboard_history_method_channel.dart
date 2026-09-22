@@ -15,7 +15,8 @@ class MethodChannelClipboardHistory extends ClipboardHistoryPlatform {
 
   @override
   Future<List<String>> getHistory() async {
-    return await methodChannel.invokeMethod<List<String>?>('getHistory') ?? [];
+    final data = await methodChannel.invokeMethod<List<Object?>>('getHistory');
+    return data?.cast<String>() ?? [];
   }
 
   @override
