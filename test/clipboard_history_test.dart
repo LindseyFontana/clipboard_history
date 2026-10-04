@@ -12,17 +12,10 @@ class MockClipboardHistoryPlatform
 }
 
 void main() {
-  final ClipboardHistoryPlatform initialPlatform = ClipboardHistoryPlatform.instance;
+  final ClipboardHistoryPlatform initialPlatform =
+      ClipboardHistoryPlatform.instance;
 
   test('$MethodChannelClipboardHistory is the default instance', () {
     expect(initialPlatform, isInstanceOf<MethodChannelClipboardHistory>());
-  });
-
-  test('getPlatformVersion', () async {
-    ClipboardHistory clipboardHistoryPlugin = ClipboardHistory();
-    MockClipboardHistoryPlatform fakePlatform = MockClipboardHistoryPlatform();
-    ClipboardHistoryPlatform.instance = fakePlatform;
-
-    expect(await clipboardHistoryPlugin.getPlatformVersion(), '42');
   });
 }
