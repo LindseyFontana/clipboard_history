@@ -1,5 +1,6 @@
 package com.lindseyfontana.clipboard_history
 
+import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.SharedPreferences
@@ -48,12 +49,47 @@ class ClipboardHistoryPlugin :
 
                 result.success(data)
             }
+            "clearHistory" -> {
+                try {
+                    clear()
+                    result.success(true)
+                } catch (e: Exception) {
+                    returnError(result, e.message)
+                }
+            }
+            "deleteItem" -> {
+                try {
+                    val item = call.arguments as? String
+                    if(item != null) {
+                       val data =  deleteItem(item);
+                        result.success(data?.toList())
+                    } else {
+                        returnError(result, "Error deleting item.")
+                    }
+
+                } catch (e: Exception) {
+                    returnError(result,  e.message)
+                }
+            }
+            "addToClipboard" -> {
+                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val valueCopied = call.arguments as? String
+                val clip = ClipData.newPlainText(valueCopied, valueCopied)
+                clipboard.setPrimaryClip(clip)
+                if(valueCopied != null) {
+                    saveInCache(valueCopied)
+                }
+            }
             else -> result.notImplemented()
         }
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
+    }
+
+    fun returnError(result: Result, message: String?) {
+        return result.error("500",message, null)
     }
 
     fun getPrefs(): SharedPreferences {
@@ -67,7 +103,21 @@ class ClipboardHistoryPlugin :
         prefs.edit().putStringSet(historyKey, set).apply()
     }
 
-    fun getFromCache(): MutableSet<String>? { val prefs = getPrefs();
-       return prefs.getStringSet(historyKey, emptySet())
+    fun getFromCache(): MutableSet<String>? {
+        val prefs = getPrefs();
+        return prefs.getStringSet(historyKey, emptySet())
+    }
+
+    fun clear() {
+        val prefs = getPrefs();
+        prefs.edit().remove(historyKey).commit()
+    }
+
+    fun deleteItem(item: String): MutableSet<String>?  {
+        val prefs = getPrefs();
+        val set = HashSet(getFromCache() ?: emptySet())
+        set.remove(item)
+        prefs.edit().putStringSet(historyKey, set).apply()
+        return set;
     }
 }

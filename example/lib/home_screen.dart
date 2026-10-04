@@ -1,0 +1,117 @@
+import 'package:clipboard_history/clipboard_history.dart';
+import 'package:flutter/material.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+  final _plugin = ClipboardHistory();
+  List<String>? _history;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    _captureClipboard();
+    _getHistory();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _captureClipboard();
+      _getHistory();
+    }
+  }
+
+  Future<void> _getHistory() async {
+    final history = await _plugin.getHistory();
+
+    setState(() {
+      _history = history;
+    });
+  }
+
+  Future<void> _captureClipboard() async {
+    await _plugin.captureClipboard();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Copia & cola',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Center(
+            child: SingleChildScrollView(
+              child: Column(children: [..._body(), clearButton()]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _body() {
+    return _history != null && _history!.isNotEmpty
+        ? _history!
+              .map(
+                (item) => Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(3.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              item,
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () async {
+                              final data = await _plugin.deleteItem(item);
+                              setState(() => _history = data);
+                            },
+                            icon: Icon(Icons.delete, color: Colors.red),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Divider(),
+                  ],
+                ),
+              )
+              .toList()
+        : _emptyBody();
+  }
+
+  List<Widget> _emptyBody() => [
+    Spacer(),
+    Text('Histórico vazio', style: TextStyle(fontSize: 20)),
+  ];
+
+  Widget clearButton() => SizedBox(
+    width: double.infinity,
+    child: ElevatedButton(
+      onPressed: () async {
+        if (await _plugin.clearHistory()) {
+          setState(() => _history = []);
+        }
+      },
+      child: Text("Apagar", style: Theme.of(context).textTheme.titleLarge),
+    ),
+  );
+}

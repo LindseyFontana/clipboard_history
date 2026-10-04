@@ -20,6 +20,24 @@ class MethodChannelClipboardHistory extends ClipboardHistoryPlatform {
   }
 
   @override
-  Future<bool> clearHistory() async =>
-      await methodChannel.invokeMethod<bool>('clearHistory') ?? false;
+  Future<bool> clearHistory() async {
+    try {
+      return await methodChannel.invokeMethod<bool>('clearHistory') ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<List<String>> deleteItem(String item) async {
+    try {
+      final data = await methodChannel.invokeMethod<List<Object?>>(
+        'deleteItem',
+        item,
+      );
+      return data?.cast<String>() ?? [];
+    } catch (e) {
+      return [];
+    }
+  }
 }

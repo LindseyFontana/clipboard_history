@@ -1,7 +1,5 @@
+import 'package:clipboard_history_example/home_screen.dart';
 import 'package:flutter/material.dart';
-import 'dart:async';
-
-import 'package:clipboard_history/clipboard_history.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,64 +12,28 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  final _plugin = ClipboardHistory();
-  List<String>? _history;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-
-    _captureClipboard();
-    _getHistory();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _captureClipboard();
-      _getHistory();
-    }
-  }
-
-  Future<void> _getHistory() async {
-    final history = await _plugin.getHistory();
-
-    setState(() {
-      _history = history;
-    });
-  }
-
-  Future<void> _captureClipboard() async {
-    await _plugin.captureClipboard();
-  }
-
+class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.green,
-          title: const Text(
-            'Clipboard History',
-            style: TextStyle(color: Colors.white),
-          ),
+      theme: ThemeData(
+        textTheme: TextTheme(
+          titleLarge: TextStyle(color: Colors.white, fontSize: 20),
         ),
-        body: Center(child: Column(children: [...historyItens])),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: TextButton.styleFrom(backgroundColor: Colors.red),
+        ),
+        appBarTheme: AppBarThemeData(
+          backgroundColor: Colors.indigo,
+          centerTitle: true,
+          titleTextStyle: Theme.of(context).textTheme.titleLarge,
+        ),
+        dividerTheme: DividerThemeData(
+          thickness: 1,
+          color: Color.fromARGB(255, 211, 210, 210),
+        ),
       ),
+      home: HomeScreen(),
     );
-  }
-
-  List<Widget> get historyItens {
-    if (_history != null && _history!.isNotEmpty) {
-      return _history!
-          .map(
-            (item) =>
-                Row(children: [Text(item, style: TextStyle(fontSize: 18))]),
-          )
-          .toList();
-    }
-    return [Text('Histórico vazio')];
   }
 }

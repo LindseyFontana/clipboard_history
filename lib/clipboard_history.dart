@@ -14,4 +14,7 @@ class ClipboardHistory {
 
   Future<bool> clearHistory() async =>
       await ClipboardHistoryPlatform.instance.clearHistory();
+
+  Future<List<String>> deleteItem(String item) async =>
+      await ClipboardHistoryPlatform.instance.deleteItem(item);
 }
