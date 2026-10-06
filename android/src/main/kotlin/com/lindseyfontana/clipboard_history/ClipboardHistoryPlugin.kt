@@ -42,13 +42,17 @@ class ClipboardHistoryPlugin :
                     saveInCache(data)
                 }
 
-                result.success(data)
+                val cachedValues = getFromCache()?.toList()
+
+                result.success(cachedValues)
             }
+
             "getHistory" -> {
                 val data = getFromCache()?.toList()
 
                 result.success(data)
             }
+
             "clearHistory" -> {
                 try {
                     clear()
@@ -57,29 +61,33 @@ class ClipboardHistoryPlugin :
                     returnError(result, e.message)
                 }
             }
+
             "deleteItem" -> {
                 try {
                     val item = call.arguments as? String
-                    if(item != null) {
-                       val data =  deleteItem(item);
+                    if (item != null) {
+                        val data = deleteItem(item);
                         result.success(data?.toList())
                     } else {
                         returnError(result, "Error deleting item.")
                     }
 
                 } catch (e: Exception) {
-                    returnError(result,  e.message)
+                    returnError(result, e.message)
                 }
             }
+
             "addToClipboard" -> {
                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val valueCopied = call.arguments as? String
                 val clip = ClipData.newPlainText(valueCopied, valueCopied)
                 clipboard.setPrimaryClip(clip)
-                if(valueCopied != null) {
+                if (valueCopied != null) {
                     saveInCache(valueCopied)
                 }
+
             }
+
             else -> result.notImplemented()
         }
     }
@@ -89,7 +97,7 @@ class ClipboardHistoryPlugin :
     }
 
     fun returnError(result: Result, message: String?) {
-        return result.error("500",message, null)
+        return result.error("500", message, null)
     }
 
     fun getPrefs(): SharedPreferences {
@@ -113,11 +121,21 @@ class ClipboardHistoryPlugin :
         prefs.edit().remove(historyKey).commit()
     }
 
-    fun deleteItem(item: String): MutableSet<String>?  {
+    fun deleteItem(item: String): MutableSet<String>? {
+        // val prefs = getPrefs()
+        // val editor = prefs.edit()
+        // editor.remove(item)
+        // val data = getFromCache()
+        // return data
+
         val prefs = getPrefs();
+        val editor = prefs.edit()
         val set = HashSet(getFromCache() ?: emptySet())
         set.remove(item)
-        prefs.edit().putStringSet(historyKey, set).apply()
+        editor.remove(historyKey).commit()
+        editor.putStringSet(historyKey, set).apply()
+        val history = getFromCache()
+        history?.size
         return set;
     }
 }

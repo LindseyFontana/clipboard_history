@@ -8,9 +8,11 @@ class MethodChannelClipboardHistory extends ClipboardHistoryPlatform {
   final methodChannel = const MethodChannel('clipboard_history');
 
   @override
-  Future<String?> captureClipboard() async {
-    final data = await methodChannel.invokeMethod<String>('captureClipboard');
-    return data;
+  Future<List<String>> captureClipboard() async {
+    final data = await methodChannel.invokeMethod<List<Object?>>(
+      'captureClipboard',
+    );
+    return data?.cast<String>() ?? [];
   }
 
   @override

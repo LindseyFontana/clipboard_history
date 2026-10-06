@@ -4,7 +4,7 @@ class ClipboardHistory {
   final List<String> history = [];
   final int historyLimit = 50;
 
-  Future<String?> captureClipboard() {
+  Future<List<String>> captureClipboard() {
     return ClipboardHistoryPlatform.instance.captureClipboard();
   }
 

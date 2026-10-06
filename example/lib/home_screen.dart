@@ -10,35 +10,23 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final _plugin = ClipboardHistory();
-  List<String>? _history;
+  List<String> _history = [];
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-
-    _captureClipboard();
     _getHistory();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _captureClipboard();
-      _getHistory();
-    }
   }
 
   Future<void> _getHistory() async {
     final history = await _plugin.getHistory();
 
-    setState(() {
-      _history = history;
-    });
+    setState(() => _history = history);
   }
 
-  Future<void> _captureClipboard() async {
-    await _plugin.captureClipboard();
+  Future<List<String>> _captureClipboard() async {
+    return await _plugin.captureClipboard();
   }
 
   @override
@@ -46,17 +34,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Copia & cola',
+          'Copia & Cola',
           style: Theme.of(context).textTheme.titleLarge,
         ),
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
-          child: _history != null && _history!.isNotEmpty
+          child: _history.isNotEmpty
               ? Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [_clipboardHistory(), _clearButton()],
+                  children: [_clipboardHistory(), actionButtons()],
                 )
               : _emptyBody(),
         ),
@@ -65,10 +53,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Widget _clipboardHistory() => Flexible(
-    child: ListView.builder(
+    child: ListView.separated(
       physics: ClampingScrollPhysics(),
-      itemCount: _history?.length,
-      itemBuilder: ((context, index) => _clipboardItem(_history![index])),
+      itemCount: _history.length,
+      itemBuilder: ((context, index) => _clipboardItem(_history[index])),
+      separatorBuilder: (context, index) => Divider(),
     ),
   );
 
@@ -106,8 +95,39 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _emptyBody() =>
-      Center(child: Text('Histórico vazio', style: TextStyle(fontSize: 20)));
+  Widget _emptyBody() => Column(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+    children: [
+      Expanded(
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.warning_amber_rounded, size: 80),
+              SizedBox(height: 12),
+              Text('Histórico vazio', style: TextStyle(fontSize: 20)),
+            ],
+          ),
+        ),
+      ),
+      _getButton(),
+    ],
+  );
+
+  Widget actionButtons() => Column(children: [_getButton(), _clearButton()]);
+
+  Widget _getButton() => SizedBox(
+    width: double.infinity,
+    child: ElevatedButton(
+      onPressed: () async {
+        final data = await _captureClipboard();
+        setState(() => _history = data);
+      },
+      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+      child: Text("colar", style: Theme.of(context).textTheme.titleLarge),
+    ),
+  );
 
   Widget _clearButton() => SizedBox(
     width: double.infinity,
@@ -117,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           setState(() => _history = []);
         }
       },
-      child: Text("Apagar", style: Theme.of(context).textTheme.titleLarge),
+      child: Text("apagar", style: Theme.of(context).textTheme.titleLarge),
     ),
   );
 }

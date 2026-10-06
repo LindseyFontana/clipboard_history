@@ -23,7 +23,7 @@ abstract class ClipboardHistoryPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<String?> captureClipboard();
+  Future<List<String>> captureClipboard();
 
   Future<List<String>> getHistory();
 
