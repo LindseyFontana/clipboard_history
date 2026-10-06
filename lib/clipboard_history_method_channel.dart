@@ -40,4 +40,17 @@ class MethodChannelClipboardHistory extends ClipboardHistoryPlatform {
       return [];
     }
   }
+
+  @override
+  Future<List<String>> addToClipboard(String item) async {
+    try {
+      final data = await methodChannel.invokeMethod<List<Object?>>(
+        'addToClipboard',
+        item,
+      );
+      return data?.cast<String>() ?? [];
+    } catch (e) {
+      return [];
+    }
+  }
 }

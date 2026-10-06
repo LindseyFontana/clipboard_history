@@ -30,4 +30,6 @@ abstract class ClipboardHistoryPlatform extends PlatformInterface {
   Future<bool> clearHistory();
 
   Future<List<String>> deleteItem(String item);
+
+  Future<List<String>> addToClipboard(String item);
 }
