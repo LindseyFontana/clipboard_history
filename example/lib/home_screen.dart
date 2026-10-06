@@ -53,57 +53,63 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
-          child: Center(
-            child: SingleChildScrollView(
-              child: Column(children: [..._body(), clearButton()]),
-            ),
-          ),
+          child: _history != null && _history!.isNotEmpty
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [_clipboardHistory(), _clearButton()],
+                )
+              : _emptyBody(),
         ),
       ),
     );
   }
 
-  List<Widget> _body() {
-    return _history != null && _history!.isNotEmpty
-        ? _history!
-              .map(
-                (item) => Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(3.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              item,
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () async {
-                              final data = await _plugin.deleteItem(item);
-                              setState(() => _history = data);
-                            },
-                            icon: Icon(Icons.delete, color: Colors.red),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Divider(),
-                  ],
-                ),
-              )
-              .toList()
-        : _emptyBody();
+  Widget _clipboardHistory() => Flexible(
+    child: ListView.builder(
+      physics: ClampingScrollPhysics(),
+      itemCount: _history?.length,
+      itemBuilder: ((context, index) => _clipboardItem(_history![index])),
+    ),
+  );
+
+  Widget _clipboardItem(String item) {
+    return Padding(
+      padding: const EdgeInsets.all(3.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(item, style: Theme.of(context).textTheme.bodyLarge),
+          ),
+          Row(
+            children: [
+              IconButton(
+                padding: EdgeInsets.zero,
+                onPressed: () async {
+                  final data = await _plugin.addToClipboard(item);
+                  setState(() => _history = data);
+                },
+                icon: Icon(Icons.content_copy),
+              ),
+              IconButton(
+                padding: EdgeInsets.zero,
+                onPressed: () async {
+                  final data = await _plugin.deleteItem(item);
+                  setState(() => _history = data);
+                },
+                icon: Icon(Icons.delete, color: Colors.red),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
-  List<Widget> _emptyBody() => [
-    Spacer(),
-    Text('Histórico vazio', style: TextStyle(fontSize: 20)),
-  ];
+  Widget _emptyBody() =>
+      Center(child: Text('Histórico vazio', style: TextStyle(fontSize: 20)));
 
-  Widget clearButton() => SizedBox(
+  Widget _clearButton() => SizedBox(
     width: double.infinity,
     child: ElevatedButton(
       onPressed: () async {
