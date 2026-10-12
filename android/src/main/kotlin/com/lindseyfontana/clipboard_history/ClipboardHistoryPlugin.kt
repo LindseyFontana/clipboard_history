@@ -9,21 +9,35 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import java.util.Collections.emptyList
 
 class ClipboardHistoryPlugin :
     FlutterPlugin,
     MethodCallHandler {
     private lateinit var channel: MethodChannel
-    private lateinit var context: Context
+    private var context: Context? = null
+    private var sharedPreferences: SharedPreferences? = null
 
-
-    val historyKey = "history";
+    companion object {
+        private const val HISTORY_KEY = "history"
+        private const val SEPARATOR = "\u0000"
+        private const val PREFS_NAME = "clipboard_cache"
+        private const val CHANNEL_NAME = "clipboard_history"
+    }
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "clipboard_history")
+        channel = MethodChannel(flutterPluginBinding.binaryMessenger, CHANNEL_NAME)
         channel.setMethodCallHandler(this)
 
         context = flutterPluginBinding.applicationContext
+
+        sharedPreferences = context?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    }
+
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        channel.setMethodCallHandler(null)
+        context = null
+        sharedPreferences = null
     }
 
     override fun onMethodCall(
@@ -32,7 +46,7 @@ class ClipboardHistoryPlugin :
     ) {
         when (call.method) {
             "captureClipboard" -> {
-                val manager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val manager = getClipboardManager()
                 val clip = manager.primaryClip
                 var data: String? = null
                 if (clip != null && clip.itemCount > 0 && clip.getItemAt(0).text != null)
@@ -42,13 +56,13 @@ class ClipboardHistoryPlugin :
                     saveInCache(data)
                 }
 
-                val cachedValues = getFromCache()?.toList()
+                val cachedValues = getFromCache()
 
                 result.success(cachedValues)
             }
 
             "getHistory" -> {
-                val data = getFromCache()?.toList()
+                val data = getFromCache()
 
                 result.success(data)
             }
@@ -66,8 +80,8 @@ class ClipboardHistoryPlugin :
                 try {
                     val item = call.arguments as? String
                     if (item != null) {
-                        val data = deleteItem(item);
-                        result.success(data?.toList())
+                        val data = deleteItem(item)
+                        result.success(data)
                     } else {
                         returnError(result, "Error deleting item.")
                     }
@@ -78,66 +92,68 @@ class ClipboardHistoryPlugin :
             }
 
             "addToClipboard" -> {
-                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val valueCopied = call.arguments as? String
-                val clip = ClipData.newPlainText(valueCopied, valueCopied)
-                clipboard.setPrimaryClip(clip)
-                if (valueCopied != null) {
-                    saveInCache(valueCopied)
-                }
+                if(valueCopied != null) {
+                    val clip = ClipData.newPlainText(valueCopied, valueCopied)
+                    getClipboardManager().setPrimaryClip(clip)
+                    if (valueCopied != null) {
+                        saveInCache(valueCopied)
+                    }
 
+                    val data = getFromCache()
+                    result.success(data)
+                } else {
+                    returnError(result, "Null value")
+                }
             }
 
             else -> result.notImplemented()
         }
     }
 
-    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        channel.setMethodCallHandler(null)
+
+
+    fun getClipboardManager() : ClipboardManager {
+        return  context?.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     }
 
     fun returnError(result: Result, message: String?) {
         return result.error("500", message, null)
     }
 
-    fun getPrefs(): SharedPreferences {
-        return context.getSharedPreferences("clipboard_cache", Context.MODE_PRIVATE);
-    }
-
     fun saveInCache(data: String) {
-        val prefs = getPrefs();
-        val list = getFromCache()
-        if (list.contains(data)) {
-            return
-        }
-        list.add(data)
+        val cachedHistory = getFromCache()
+        if (cachedHistory.contains(data))  return
 
-        prefs.edit().putString(historyKey, list
-            .joinToString("\u0000"))
-            .apply()
+        cachedHistory.add(data)
 
-        val data = prefs.getString(historyKey, null)
-        println(data)
+        sharedPreferences?.edit()?.putString(HISTORY_KEY, joinOrNull(cachedHistory))
+            ?.apply()
     }
 
     fun getFromCache(): MutableList<String> {
-        val prefs = getPrefs();
-        val cachedValues =  prefs.getString(historyKey, null)
-        val splitValues = cachedValues?.split("\u0000") ?: emptyList()
-        return splitValues.toMutableList()
+        val cachedHistory =  sharedPreferences?.getString(HISTORY_KEY, null)
+
+        return cachedHistory?.split(SEPARATOR)?.toMutableList() ?: emptyList()
     }
 
     fun clear() {
-        val prefs = getPrefs();
-        prefs.edit().remove(historyKey).commit()
+        sharedPreferences?.edit()?.remove(HISTORY_KEY)?.apply()
     }
 
-    fun deleteItem(item: String): List<String> {
-        val prefs = getPrefs();
-        val editor = prefs.edit()
+    fun deleteItem(item: String): MutableList<String> {
         val list = getFromCache()
-        list.remove(item)
-        editor.putString(historyKey, if(list.isNotEmpty()) list.joinToString("\u0000") else null).apply()
-        return list;
+        if(list.isNotEmpty()) list.remove(item)
+        updateCache(list)
+        return list
+    }
+
+    fun updateCache(list:  List<String>) {
+        val editor = sharedPreferences?.edit()
+        editor?.putString(HISTORY_KEY, joinOrNull(list))?.apply()
+    }
+
+    fun joinOrNull(list: List<String>) : String? {
+        return if(list.isNotEmpty())  list.joinToString(SEPARATOR) else null
     }
 }
