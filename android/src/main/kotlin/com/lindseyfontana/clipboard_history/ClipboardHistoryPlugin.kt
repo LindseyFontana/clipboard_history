@@ -106,14 +106,25 @@ class ClipboardHistoryPlugin :
 
     fun saveInCache(data: String) {
         val prefs = getPrefs();
-        val set = HashSet(getFromCache())
-        set.add(data)
-        prefs.edit().putStringSet(historyKey, set).apply()
+        val list = getFromCache()
+        if (list.contains(data)) {
+            return
+        }
+        list.add(data)
+
+        prefs.edit().putString(historyKey, list
+            .joinToString("\u0000"))
+            .apply()
+
+        val data = prefs.getString(historyKey, null)
+        println(data)
     }
 
-    fun getFromCache(): MutableSet<String>? {
+    fun getFromCache(): MutableList<String> {
         val prefs = getPrefs();
-        return prefs.getStringSet(historyKey, emptySet())
+        val cachedValues =  prefs.getString(historyKey, null)
+        val splitValues = cachedValues?.split("\u0000") ?: emptyList()
+        return splitValues.toMutableList()
     }
 
     fun clear() {
@@ -121,21 +132,12 @@ class ClipboardHistoryPlugin :
         prefs.edit().remove(historyKey).commit()
     }
 
-    fun deleteItem(item: String): MutableSet<String>? {
-        // val prefs = getPrefs()
-        // val editor = prefs.edit()
-        // editor.remove(item)
-        // val data = getFromCache()
-        // return data
-
+    fun deleteItem(item: String): List<String> {
         val prefs = getPrefs();
         val editor = prefs.edit()
-        val set = HashSet(getFromCache() ?: emptySet())
-        set.remove(item)
-        editor.remove(historyKey).commit()
-        editor.putStringSet(historyKey, set).apply()
-        val history = getFromCache()
-        history?.size
-        return set;
+        val list = getFromCache()
+        list.remove(item)
+        editor.putString(historyKey, if(list.isNotEmpty()) list.joinToString("\u0000") else null).apply()
+        return list;
     }
 }

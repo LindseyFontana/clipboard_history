@@ -22,7 +22,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void> _getHistory() async {
     final history = await _plugin.getHistory();
 
-    setState(() => _history = history);
+    updateHistory(history);
+  }
+
+  void updateHistory(List<String> history) {
+    setState(() => _history = history.reversed.toList());
   }
 
   Future<List<String>> _captureClipboard() async {
@@ -76,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 padding: EdgeInsets.zero,
                 onPressed: () async {
                   final data = await _plugin.addToClipboard(item);
-                  setState(() => _history = data);
+                  updateHistory(data);
                 },
                 icon: Icon(Icons.content_copy),
               ),
@@ -84,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 padding: EdgeInsets.zero,
                 onPressed: () async {
                   final data = await _plugin.deleteItem(item);
-                  setState(() => _history = data);
+                  updateHistory(data);
                 },
                 icon: Icon(Icons.delete, color: Colors.red),
               ),
@@ -122,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     child: ElevatedButton(
       onPressed: () async {
         final data = await _captureClipboard();
-        setState(() => _history = data);
+        updateHistory(data);
       },
       style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
       child: Text("colar", style: Theme.of(context).textTheme.titleLarge),
