@@ -9,6 +9,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import org.json.JSONArray
 import java.util.Collections.emptyList
 
 class ClipboardHistoryPlugin :
@@ -20,7 +21,6 @@ class ClipboardHistoryPlugin :
 
     companion object {
         private const val HISTORY_KEY = "history"
-        private const val SEPARATOR = "\u0000"
         private const val PREFS_NAME = "clipboard_cache"
         private const val CHANNEL_NAME = "clipboard_history"
 
@@ -126,7 +126,7 @@ class ClipboardHistoryPlugin :
 
         cachedHistory.add(data)
 
-        sharedPreferences?.edit()?.putString(HISTORY_KEY, joinOrNull(cachedHistory))
+        sharedPreferences?.edit()?.putString(HISTORY_KEY, stringOrNull(cachedHistory))
             ?.apply()
 
         return cachedHistory;
@@ -135,7 +135,11 @@ class ClipboardHistoryPlugin :
     private fun getFromCache(): List<String> {
         val cachedHistory =  sharedPreferences?.getString(HISTORY_KEY, null)
 
-        return cachedHistory?.split(SEPARATOR) ?: emptyList()
+        if(cachedHistory != null)  {
+            return JSONArray(cachedHistory).let { (0 until it.length()).map(it::getString) }
+        }
+
+        return emptyList()
     }
 
     private fun clear() {
@@ -151,10 +155,10 @@ class ClipboardHistoryPlugin :
 
     private fun updateCache(list:  List<String>) {
         val editor = sharedPreferences?.edit()
-        editor?.putString(HISTORY_KEY, joinOrNull(list))?.apply()
+        editor?.putString(HISTORY_KEY, JSONArray(list).toString())?.apply()
     }
 
-    private fun joinOrNull(list: List<String>) : String? {
-        return if(list.isNotEmpty())  list.joinToString(SEPARATOR) else null
+    private fun stringOrNull(list: List<String>) : String? {
+        return if(list != null) JSONArray(list).toString() else null
     }
 }
