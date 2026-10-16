@@ -79,8 +79,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               IconButton(
                 padding: EdgeInsets.zero,
                 onPressed: () async {
-                  final data = await _plugin.addToClipboard(item);
-                  updateHistory(data);
+                  await _plugin.addToClipboard(item);
                 },
                 icon: Icon(Icons.content_copy),
               ),

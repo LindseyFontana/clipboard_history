@@ -18,6 +18,6 @@ class ClipboardHistory {
   Future<List<String>> deleteItem(String item) async =>
       await ClipboardHistoryPlatform.instance.deleteItem(item);
 
-  Future<List<String>> addToClipboard(String item) async =>
+  Future<bool> addToClipboard(String item) async =>
       await ClipboardHistoryPlatform.instance.addToClipboard(item);
 }
