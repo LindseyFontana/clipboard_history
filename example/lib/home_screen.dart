@@ -60,12 +60,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     child: ListView.separated(
       physics: ClampingScrollPhysics(),
       itemCount: _history.length,
-      itemBuilder: ((context, index) => _clipboardItem(_history[index])),
+      itemBuilder: ((context, index) => _clipboardItem(_history[index], index)),
       separatorBuilder: (context, index) => Divider(),
     ),
   );
 
-  Widget _clipboardItem(String item) {
+  Widget _clipboardItem(String item, int index) {
     return Padding(
       padding: const EdgeInsets.all(3.0),
       child: Row(
@@ -77,6 +77,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Row(
             children: [
               IconButton(
+                key: Key('copy-item$index'),
                 padding: EdgeInsets.zero,
                 onPressed: () async {
                   await _plugin.addToClipboard(item);
@@ -84,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 icon: Icon(Icons.content_copy),
               ),
               IconButton(
+                key: Key('delete-item$index'),
                 padding: EdgeInsets.zero,
                 onPressed: () async {
                   final data = await _plugin.deleteItem(item);
@@ -123,6 +125,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _getButton() => SizedBox(
     width: double.infinity,
     child: ElevatedButton(
+      key: const Key('add-button'),
       onPressed: () async {
         final data = await _captureClipboard();
         updateHistory(data);
@@ -135,6 +138,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _clearButton() => SizedBox(
     width: double.infinity,
     child: ElevatedButton(
+      key: const Key('clear-button'),
       onPressed: () async {
         if (await _plugin.clearHistory()) {
           setState(() => _history = []);
