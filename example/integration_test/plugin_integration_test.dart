@@ -1,11 +1,3 @@
-// This is a basic Flutter integration test.
-//
-// Since integration tests run in a full Flutter application, they can interact
-// with the host side of a plugin implementation, unlike Dart unit tests.
-//
-// For more information about Flutter integration tests, please see
-// https://flutter.dev/to/integration-testing
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -14,11 +6,50 @@ import 'package:clipboard_history/clipboard_history.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('getPlatformVersion test', (WidgetTester tester) async {
-    final ClipboardHistory plugin = ClipboardHistory();
-    final String? version = await plugin.getPlatformVersion();
-    // The version string depends on the host platform running the test, so
-    // just assert that some non-empty string is returned.
-    expect(version?.isNotEmpty, true);
+  final ClipboardHistory plugin = ClipboardHistory();
+
+  setUp(() async {
+    await plugin.clearHistory();
+  });
+
+  testWidgets('addToClipboard returns true', (WidgetTester tester) async {
+    final added = await plugin.addToClipboard('item1');
+
+    expect(added, true);
+  });
+
+  testWidgets('captureClipboard adds the clipboard content to the history', (
+    WidgetTester tester,
+  ) async {
+    await plugin.addToClipboard('item1');
+
+    final history = await plugin.captureClipboard();
+
+    expect(history, isA<List<String>>());
+    expect(history, contains('item1'));
+  });
+
+  testWidgets('getHistory returns a list', (WidgetTester tester) async {
+    final history = await plugin.getHistory();
+
+    expect(history, isA<List<String>>());
+  });
+
+  testWidgets('deleteItem removes the item from the history', (
+    WidgetTester tester,
+  ) async {
+    await plugin.addToClipboard('item1');
+    await plugin.captureClipboard();
+
+    final history = await plugin.deleteItem('item1');
+
+    expect(history, isA<List<String>>());
+    expect(history, isNot(contains('item1')));
+  });
+
+  testWidgets('clearHistory returns true', (WidgetTester tester) async {
+    final cleared = await plugin.clearHistory();
+
+    expect(cleared, true);
   });
 }
